@@ -1,32 +1,45 @@
 import requests
+import pandas as pd
+import io
 import os
 
-def download_data():
-    # URLs for ISOT Dataset (or compatible mirror)
-    fake_url = "https://raw.githubusercontent.com/hosseindamavandi/Fake-News-Detection/main/Fake.csv"
-    real_url = "https://raw.githubusercontent.com/hosseindamavandi/Fake-News-Detection/main/True.csv"
+def download_and_merge():
+    # Links for Politifact data (KaiDMML/FakeNewsNet)
+    fake_url = "https://raw.githubusercontent.com/KaiDMML/FakeNewsNet/master/dataset/politifact_fake.csv"
+    real_url = "https://raw.githubusercontent.com/KaiDMML/FakeNewsNet/master/dataset/politifact_real.csv"
     
-    # Ensure directory exists
     if not os.path.exists('dataset'):
         os.makedirs('dataset')
-
-    urls = {
-        "dataset/Fake.csv": fake_url,
-        "dataset/True.csv": real_url
-    }
-
-    for file_path, url in urls.items():
-        try:
-            print(f"Downloading {file_path} from {url}...")
-            response = requests.get(url, stream=True)
-            response.raise_for_status()
-            
-            with open(file_path, 'wb') as f:
-                for chunk in response.iter_content(chunk_size=8192):
-                    f.write(chunk)
-            print(f"Saved {file_path}")
-        except Exception as e:
-            print(f"Failed to download {file_path}: {e}")
+        
+    try:
+        print("Downloading Fake news data...")
+        f_resp = requests.get(fake_url)
+        f_resp.raise_for_status()
+        df_fake = pd.read_csv(io.StringIO(f_resp.text))
+        df_fake['label'] = 'FAKE'
+        
+        print("Downloading Real news data...")
+        r_resp = requests.get(real_url)
+        r_resp.raise_for_status()
+        df_real = pd.read_csv(io.StringIO(r_resp.text))
+        df_real['label'] = 'REAL'
+        
+        # Merge
+        print("Merging datasets...")
+        df_total = pd.concat([df_fake, df_real], ignore_index=True)
+        
+        # The Politifact dataset uses 'title' for the headline.
+        # It doesn't always have full text in the CSV (it has URLs), 
+        # but for this demo, we will use 'title' as the content to train on.
+        df_total['text'] = df_total['title'] 
+        
+        output_path = "dataset/news.csv"
+        df_total.to_csv(output_path, index=False)
+        print(f"Saved {len(df_total)} rows to {output_path}")
+        return True
+    except Exception as e:
+        print(f"Error: {e}")
+        return False
 
 if __name__ == "__main__":
-    download_data()
+    download_and_merge()

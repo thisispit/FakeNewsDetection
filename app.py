@@ -40,7 +40,20 @@ else:
     
     if input_method == "Paste Text":
         st.subheader("📝 Paste News Content")
-        user_input = st.text_area("Paste the full article text here:", height=200)
+        
+        col1, col2 = st.columns(2)
+        with col1:
+            if st.button("Load Real News Sample"):
+                st.session_state['text_input'] = "The finance ministry released a statement regarding the new tax slabs applicable from next year. The government aims to reduce the burden on the middle class."
+        with col2:
+            if st.button("Load Fake News Sample"):
+                st.session_state['text_input'] = "A local man claims to have eaten 500 burgers in a single meal, doctors are baffled. The man, known as 'Burger King', says he felt fine afterwards."
+        
+        # Use session state to handle button clicks updating text area
+        if 'text_input' not in st.session_state:
+            st.session_state['text_input'] = ""
+            
+        user_input = st.text_area("Paste the full article text here:", value=st.session_state['text_input'], height=200)
         
     elif input_method == "Enter Headline":
         st.subheader("📢 Enter News Headline")
@@ -76,21 +89,22 @@ else:
                 prediction = model.predict(input_vector)[0]
                 probabilities = model.predict_proba(input_vector)[0]
                 
-                # prob[0] = Real, prob[1] = Fake (Based on our training mapping: Real=0, Fake=1)
-                # However, let's double check the mapping logic from train_model.py
-                # In train_model.py we did: {'FAKE': 1, 'REAL': 0}
-                # So class 0 is Real, class 1 is Fake.
-                
+                # Real=0, Fake=1
                 real_prob = probabilities[0]
                 fake_prob = probabilities[1]
                 
-                if prediction == 1:
+                # Confidence Threshold
+                confidence = max(real_prob, fake_prob)
+                
+                if confidence < 0.60:
+                    result = "UNCERTAIN"
+                    color = "orange"
+                    st.warning("The model is not confident enough to classify this text definitively.")
+                elif prediction == 1:
                     result = "FAKE NEWS"
-                    confidence = fake_prob
                     color = "red"
                 else:
                     result = "REAL NEWS"
-                    confidence = real_prob
                     color = "green"
                 
                 # Display Results
@@ -116,7 +130,7 @@ else:
         st.markdown("""
         1. **Text Preprocessing**: The system cleans the text (removes punctuation, stopwords, etc.).
         2. **Vectorization**: Uses **TF-IDF** to convert text into numbers.
-        3. **Prediction**: A **Logistic Regression** model analyzes the features.
-        4. **Confidence Score**: The model's `predict_proba` function gives the certainty percentage.
+        3. **Prediction**: A **Passive Aggressive Classifier** analyzes the features.
+        4. **Confidence Score**: The model's `predict_proba` function (calibrated) gives the certainty percentage.
         """)
 

@@ -23,7 +23,7 @@ def clean_text(text):
     text = str(text).lower()
     text = re.sub('\[.*?\]', '', text)
     text = re.sub('[%s]' % re.escape(string.punctuation), '', text)
-    text = re.sub('\w*\d\w*', '', text)
+    text = re.sub(r'\b\d+\b', '', text)
     
     stop_words = set(stopwords.words('english'))
     words = text.split()
