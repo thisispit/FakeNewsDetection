@@ -6,3 +6,7 @@ requests
 beautifulsoup4
 streamlit
 joblib
+lime
+plotly
+fpdf2
+openpyxl
