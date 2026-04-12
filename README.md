@@ -1,4 +1,4 @@
-# Fake News Detection System - Enhanced Edition
+# Fake News Detection System
 
 A professional Machine Learning powered web application that predicts whether a news article is **Real** or **Fake**, with comprehensive analytics, AI explainability, and advanced features.
 
