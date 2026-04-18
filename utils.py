@@ -31,13 +31,37 @@ def clean_text(text):
     words = [w for w in words if w not in stop_words]
     return " ".join(words)
 
+def is_valid_url(url):
+    """
+    Validates if the string is a valid URL.
+    """
+    regex = re.compile(
+        r'^(?:http|ftp)s?://' # http:// or https://
+        r'(?:(?:[A-Z0-9](?:[A-Z0-9-]{0,61}[A-Z0-9])?\.)+(?:[A-Z]{2,6}\.?|[A-Z0-9-]{2,}\.?)|' #domain...
+        r'localhost|' #localhost...
+        r'\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})' # ...or ip
+        r'(?::\d+)?' # optional port
+        r'(?:/?|[/?]\S+)$', re.IGNORECASE)
+    return re.match(regex, url) is not None
+
 def fetch_text_from_url(url):
     """
     Fetches article text from a given URL using requests and BeautifulSoup.
     """
+    if not is_valid_url(url):
+        return None, "Invalid URL format. Please enter a valid http/https link."
+        
     try:
         # User-Agent header is often needed to avoid being blocked by news sites
         headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'}
+        
+        # Check content type before downloading full content
+        head_response = requests.head(url, headers=headers, timeout=5, allow_redirects=True)
+        content_type = head_response.headers.get('Content-Type', '').lower()
+        
+        if 'text/html' not in content_type:
+            return None, f"Unsupported content type: {content_type}. Please provide a link to a news article (HTML page)."
+
         response = requests.get(url, headers=headers, timeout=10)
         response.raise_for_status()
         

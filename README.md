@@ -6,40 +6,37 @@ A professional Machine Learning powered web application that predicts whether a 
 - **AI Explainability**: See which words influenced the prediction with LIME integration
 - **Batch Processing**: Analyze hundreds of articles at once
 - **Interactive Dashboards**: History tracking, statistics, and comparison tools
-- **Professional UI**: Dark/Light mode with mobile-responsive design
+- **Professional UI**: Dark theme with mobile-responsive design and granular loading states
 - **Export Options**: PDF reports and CSV downloads
 
 ## 📌 Core Features
 
 ### 🔍 Prediction Engine
-- **Machine Learning**: Logistic Regression with TF-IDF Vectorization
-- **Confidence Score**: Probability percentage for each prediction
+- **Machine Learning**: Passive Aggressive Classifier with TF-IDF Vectorization
+- **Confidence Score**: Probability percentage with interactive tooltips
 - **Multiple Input Methods**:
   - Full article text
   - Headlines only
-  - URL (automatic text extraction)
+  - URL (with robust validation and automatic text extraction)
 
 ### ✨ Advanced Features
 - **AI Explainability (LIME)**: Visual word-level influence analysis
-- **Source Credibility**: Domain reputation scoring for URLs
-- **Prediction History**: Searchable database of all past predictions
-- **Batch Analysis**: CSV upload for bulk article processing
+- **Source Credibility**: Domain reputation scoring for URLs with security checks
+- **Prediction History**: Searchable SQLite database of all past predictions
+- **Batch Analysis**: CSV upload for bulk article processing with progress tracking
 - **Comparison Mode**: Side-by-side analysis of multiple articles
 - **Interactive Charts**: Plotly visualizations for insights
 - **Export Tools**: PDF reports and CSV downloads
 - **User Feedback**: Rating system with analytics
-- **Dark/Light Theme**: Professional UI with toggle
-- **Mobile Responsive**: Touch-friendly interface
 
 ## 📂 Project Structure
 ```
 FakeNewsDetection/
 │
 ├── 🎯 Core Application
-│   ├── app.py                  # Original simple app
-│   ├── app_enhanced.py         # ⭐ Enhanced app with all features
+│   ├── app.py                  # Main Streamlit application
 │   ├── train_model.py          # Model training script
-│   └── utils.py                # Text processing utilities
+│   └── utils.py                # Text processing & URL validation utilities
 │
 ├── 🔧 Feature Modules
 │   ├── database.py             # SQLite database operations
@@ -49,8 +46,8 @@ FakeNewsDetection/
 │
 ├── 📊 Data & Models
 │   ├── dataset/
-│   │   ├── news.csv            # Training dataset (download separately)
-│   │   └── sample_data.csv     # Demo dataset included
+│   │   ├── news.csv            # Training dataset
+│   │   └── sample_data.csv     # Demo dataset
 │   ├── model/
 │   │   ├── fake_news_model.pkl      # Trained model
 │   │   └── tfidf_vectorizer.pkl     # TF-IDF vectorizer
@@ -58,7 +55,7 @@ FakeNewsDetection/
 │       └── predictions.db      # SQLite database (auto-created)
 │
 ├── 📖 Documentation
-│   ├── README.md               # Main documentation (this file)
+│   ├── README.md               # Main documentation
 │   ├── QUICK_START.md          # Quick start guide
 │   ├── NEW_FEATURES.md         # Detailed feature documentation
 │   ├── UI_ENHANCEMENTS.md      # UI design documentation
@@ -83,36 +80,18 @@ cd FakeNewsDetection
 pip install -r requirements.txt
 ```
 
-**Dependencies include:**
-- `streamlit` - Web framework
-- `scikit-learn` - ML models
-- `pandas`, `numpy` - Data processing
-- `lime` - AI explainability
-- `plotly` - Interactive charts
-- `fpdf2` - PDF generation
-- `beautifulsoup4` - URL parsing
-- `requests` - HTTP requests
-
 ### 3. Prepare Dataset
-The project includes `sample_data.csv` for testing. For production:
-
-1. Download the [Fake and Real News Dataset](https://www.kaggle.com/clmentbisaillon/fake-and-real-news-dataset) from Kaggle
-2. Place as `dataset/news.csv` with columns: `title`, `text`, `label`
+The project includes `sample_data.csv` for testing. To train on a full dataset:
+1. Run `python download_data.py` to fetch Politifact data.
+2. OR place your own `news.csv` in the `dataset/` folder.
 
 ### 4. Train the Model
 ```bash
 python train_model.py
 ```
-*Creates `fake_news_model.pkl` and `tfidf_vectorizer.pkl` in the `model/` directory*
+*Creates the model and vectorizer in the `model/` directory.*
 
 ### 5. Run the Application
-
-**Option A: Enhanced Version (Recommended)**
-```bash
-streamlit run app_enhanced.py
-```
-
-**Option B: Simple Version**
 ```bash
 streamlit run app.py
 ```
@@ -124,161 +103,72 @@ Open your browser to `http://localhost:8501`
 
 ## 📱 Application Modes
 
-The enhanced version includes 5 navigation modes:
-
 1. **🔍 Single Prediction**
-   - Analyze individual articles
-   - AI explanations with LIME
+   - Analyze individual articles with granular loading states
+   - AI explanations with LIME highlighting
+   - URL validation and content-type checking
    - Export to PDF/CSV
-   - Source credibility checking
 
 2. **📦 Batch Processing**
    - Upload CSV with multiple articles
    - Bulk analysis with progress tracking
    - Summary statistics and charts
-   - Batch export
 
 3. **⚖️ Comparison Mode**
    - Compare multiple articles side-by-side
-   - Visual comparison charts
-   - Relative probability analysis
+   - Visual probability distribution charts
 
 4. **📜 History**
-   - View all past predictions
-   - Search and filter capabilities
+   - View all past predictions with search and filter
    - Export history as CSV
 
 5. **📊 Statistics**
-   - Total predictions count
-   - Fake vs Real distribution
+   - Total predictions and class distribution
    - User feedback analytics
-   - Satisfaction metrics
 
 ---
 
 ## 🎓 How It Works
 
-### 1. How does it work?
-The system treats fake news detection as a **Binary Classification** problem.
-- **Input**: News text.
-- **Process**: The text is cleaned (removed punctuation, stopwords) and converted into numbers using **TF-IDF**.
-- **Model**: These numbers are fed into a **Logistic Regression** model which has learned patterns from thousands of previous real/fake articles.
-- **Output**: The model returns a probability (0 to 1). If > 0.5, it's classified as Fake (or Real, depending on mapping).
+### 1. The Model
+The system uses a **Passive Aggressive Classifier** calibrated for probability outputs. It is particularly well-suited for large-scale text classification.
 
-### 2. Why TF-IDF?
-**TF-IDF (Term Frequency - Inverse Document Frequency)** counts how important a word is.
-- It gives high weight to unique words that appear often in a specific article but rarely elsewhere.
-- It filters out common words like "the", "is", "and" which don't help in classification.
+### 2. TF-IDF Vectorization
+Text is converted into numerical features using **TF-IDF (Term Frequency - Inverse Document Frequency)** with N-grams (1,2), capturing both individual words and common phrases.
 
-### 3. Why Logistic Regression?
-- It is simple, fast, and effective for text classification.
-- Crucially, it provides a **probability score** (e.g., "80% sure this is Fake"), unlike some other algorithms (like SVM) which might just give a hard class label.
+### 3. AI Explainability
+Using **LIME**, the system perturbs the input text to see which words most influence the model's decision, highlighting them in the UI (Red for Fake indicators, Green for Real).
 
-### 4. What is the Confidence Score?
-The confidence score is the probability output from the model (`model.predict_proba`).
-- If the model says 0.85 (85%) for "Fake", it means the features of this text strongly resemble the "Fake" examples it saw during training.
-
-### 5. AI Explainability with LIME
-**LIME (Local Interpretable Model-Agnostic Explanations)** shows which words influenced the prediction:
-- Highlights important words in color (green=real, red=fake)
-- Provides weight scores for each word
-- Generates interactive charts
-- Helps users understand the "why" behind predictions
-
-### 6. Limitations
-- The model detects **patterns in writing style** (e.g., sensationalism, specific vocabulary) rather than fact-checking content
-- May incorrectly flag poorly written real news as fake
-- Performance depends on training data quality
-- LIME explanations take 2-3 seconds to generate
-- Source credibility uses heuristics (can be enhanced with APIs)
-
----
-
-## 📊 Usage Examples
-
-### Example 1: Single Article with Explanation
-```
-1. Navigate to "Single Prediction"
-2. Paste article text or URL
-3. Click "Analyze Article"
-4. View prediction with confidence score
-5. Scroll to see AI explanation
-6. Check influential words and charts
-7. Download PDF report
-```
-
-### Example 2: Batch Processing
-```
-1. Prepare CSV with columns: title, text
-2. Navigate to "Batch Processing"
-3. Upload CSV file
-4. Click "Process All Articles"
-5. View results table and statistics
-6. Download batch results as CSV
-```
-
-### Example 3: Compare Articles
-```
-1. Analyze Article A → Add to Comparison
-2. Analyze Article B → Add to Comparison
-3. Go to "Comparison Mode"
-4. View side-by-side analysis
-5. Compare probabilities and features
-```
+### 4. URL Validation & Credibility
+The system performs a HEAD request to verify content types (preventing non-HTML downloads) and evaluates domain reputation based on a curated list of credible and unreliable sources.
 
 ---
 
 ## 🛠️ Technologies Used
 
-- **Python 3.x** - Core language
-- **Streamlit** - Web framework
-- **scikit-learn** - Machine learning
-- **LIME** - AI explainability
-- **Plotly** - Interactive visualizations
-- **SQLite** - Database
-- **FPDF2** - PDF generation
-- **BeautifulSoup4** - Web scraping
-
----
-
-## 📖 Documentation
-
-- **Quick Start**: See [QUICK_START.md](QUICK_START.md)
-- **Features Guide**: See [NEW_FEATURES.md](NEW_FEATURES.md)
-- **UI Documentation**: See [UI_ENHANCEMENTS.md](UI_ENHANCEMENTS.md)
-- **Implementation**: See [IMPLEMENTATION_SUMMARY.md](IMPLEMENTATION_SUMMARY.md)
+- **Python 3.x**
+- **Streamlit** (Web UI)
+- **Scikit-learn** (Machine Learning)
+- **LIME** (AI Explainability)
+- **Plotly** (Visualizations)
+- **SQLite** (Data Persistence)
+- **FPDF2** (PDF Generation)
+- **BeautifulSoup4** (Web Scraping)
 
 ---
 
 ## 🤝 Contributing
 
-Contributions are welcome! To contribute:
-
 1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
+2. Create a feature branch
+3. Commit your changes
+4. Open a Pull Request
 
 ---
 
 ## 📝 License
 
-This project is open source and available under the MIT License.
-
----
-
-## 🙏 Acknowledgments
-
-- Dataset: [Fake and Real News Dataset](https://www.kaggle.com/clmentbisaillon/fake-and-real-news-dataset)
-- LIME Library: [LIME GitHub](https://github.com/marcotcr/lime)
-- Streamlit: [Streamlit.io](https://streamlit.io)
-
----
-
-## 📧 Contact
-
-For questions or feedback, please open an issue on GitHub.
+This project is licensed under the MIT License.
 
 ---
 
