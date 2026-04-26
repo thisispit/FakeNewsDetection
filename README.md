@@ -67,7 +67,7 @@ FakeNewsDetection/
     └── download_data.py        # Dataset downloader script
 ```
 
-## 🚀 Quick Start
+## Quick Start
 
 ### 1. Clone the Repository
 ```bash
